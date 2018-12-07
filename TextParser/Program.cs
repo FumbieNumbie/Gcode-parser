@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
+using System;
 
 namespace TextParser
 {
@@ -10,22 +10,60 @@ namespace TextParser
 	{
 		static void Main(string[] args)
 		{
+			int argCount = args.Length;
+			string homePath = @"";
 			string fileContents;
-			using (StreamReader reader = new StreamReader(@"C:\users\aalex\desktop\file.txt", Encoding.UTF8))
+			string fileName = "file.txt";
+			Console.Write("Enter a file name: ");
+		Mark:
+			fileName = Console.ReadLine();
+			DateTime now = DateTime.Now;
+			try
 			{
-				fileContents = reader.ReadToEnd();
+				using (StreamReader reader = new StreamReader(homePath + fileName, Encoding.UTF8))
+				{
+					fileContents = reader.ReadToEnd();
+				}
 			}
+			catch (FileNotFoundException)
+			{
+				Console.Write("Wrong file name. Try again: ");
+				goto Mark;
+			}
+			double ratio = 0;
 
 			string[] lines = fileContents.Split('\n');
 			List<string> refinedList = RefineList(lines);
-			foreach (var item in refinedList)
+			if (argCount > 0)
 			{
-				System.Console.WriteLine(item);
+				if (Array.IndexOf(args, "-abs") != -1)
+				{
+					ratio = GetRatio(refinedList, true);
+				}
 			}
-			float raito = GetRatio(refinedList);
-			System.Console.WriteLine("Ratio: " + raito);
+			else
+			{
+				ratio = GetRatio(refinedList);
+			}
+			Console.WriteLine("Ratio: " + ratio);
+			Console.WriteLine("Elapsed time: " + (DateTime.Now - now).TotalSeconds);
+			Console.WriteLine("Would you like to parse another file?");
+			Console.WriteLine("Y/N (Default is Y)");
+			string answer = Console.ReadLine();
+			if (answer == "n")
+			{
+				Environment.Exit(0);
+			}
+			else
+			{
+				Console.Write("Enter a file name: ");
+				goto Mark;
+			}
 		}
-
+		/// <summary>
+		/// Cleans the initial array from strings that have nothing to do with calculations.
+		/// </summary>
+		/// <param name="lines">An array of strings.</param>
 		private static List<string> RefineList(string[] lines)
 		{
 			List<string> list = new List<string>();
@@ -38,6 +76,7 @@ namespace TextParser
 				Match match2 = pattern2.Match(item);
 				Match match3 = pattern3.Match(item);
 				string line = "";
+				// Create a line containing only coordinates and extrusion
 				if (match1.Success)
 				{
 					line += match1.Value;
@@ -51,16 +90,20 @@ namespace TextParser
 				{
 					line += match3.Value;
 				}
-				list.Add(line);
-
+				if (match1.Success)
+				{
+					list.Add(line);
+				}
 			}
-
 			return list;
 		}
-
-		private static float GetRatio(List<string> refList)
+		/// <summary>
+		/// The result of division of line length by extrusion length.
+		/// </summary>
+		/// <param name="refList">Refined list of input elements.</param>
+		private static double GetRatio(List<string> refList, bool absolute = false)
 		{
-			float totalLength = 0;
+			double totalLength = 0;
 			float lastE = 0, currentE = 0;
 			float deltaE = 0;
 			float totalE = 0;
@@ -78,29 +121,45 @@ namespace TextParser
 					}
 					lastE = currentE;
 				}
-				string[] line = refList[i].Split(' ');
 				bool hop = CheckHops(refList[i - 1], refList[i]);
 				if (!hop) //if these two lines are not a hop
 				{
 
-					Vector2 start = GetSegmentPoint(refList, i - 1);
-					Vector2 end = GetSegmentPoint(refList, i);
-					Vector2 segment = end - start;
+					Vector start = GetSegmentPoint(refList, i - 1);
+					Vector end = GetSegmentPoint(refList, i);
+					Vector segment = end - start;
 					totalLength += segment.Length();
 				}
 			}
-			return totalLength / totalE;
+			if (absolute == true)
+			{
+				return totalLength / totalE;
+			}
+			else
+			{
+				return 172.2558 / totalLength * totalE;
+			}
 		}
-
-		private static Vector2 GetSegmentPoint(List<string> refList, int i)
+		/// <summary>
+		/// Creates one of the points of a line segment.
+		/// </summary>
+		/// <param name="refList">A refined list of coordinates and extrusions.</param>
+		/// <param name="i">An index of an element in the list.</param>
+		private static Vector GetSegmentPoint(List<string> refList, int i)
 		{
 			string[] line = refList[i].Split(' ');
 			float x = float.Parse(line[0].Substring(1));
 			float y = float.Parse(line[1].Substring(1));
-			Vector2 point = new Vector2(x, y);
+			Vector point = new Vector(x, y);
 			return point;
 		}
 
+		/// <summary>
+		/// Checks if there is no extrusion in a segment.
+		/// </summary>
+		/// <param name="st1">A string corresponding to the segment's start.</param>
+		/// <param name="st2">A string corresponding to the segment's end.</param>
+		/// <returns></returns>
 		private static bool CheckHops(string st1, string st2)
 		{
 			Regex pattern = new Regex(@"E\d+\.*\d*");
@@ -115,7 +174,6 @@ namespace TextParser
 				return false;
 			}
 			else return true;
-
 		}
 	}
 }

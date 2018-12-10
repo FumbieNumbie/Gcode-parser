@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
-using System;
 
 namespace TextParser
 {
@@ -11,25 +10,25 @@ namespace TextParser
 		static void Main(string[] args)
 		{
 			int argCount = args.Length;
-			string homePath = @"";
-			string fileContents;
-			string fileName = "file.txt";
-			Console.Write("Enter a file name: ");
+			string fileContents = "";
+			string fileName = "test";
 		Mark:
+			Console.Write("Enter a file name: ");
 			fileName = Console.ReadLine();
+			fileName = GetFullName(fileName);
 			DateTime now = DateTime.Now;
 			try
 			{
-				using (StreamReader reader = new StreamReader(homePath + fileName, Encoding.UTF8))
+				using (StreamReader reader = new StreamReader(fileName, true))
 				{
 					fileContents = reader.ReadToEnd();
 				}
 			}
 			catch (FileNotFoundException)
 			{
-				Console.Write("Wrong file name. Try again: ");
-				goto Mark;
+				Console.WriteLine("Wrong file name. Try again.");
 			}
+			
 			double ratio = 0;
 
 			string[] lines = fileContents.Split('\n');
@@ -48,7 +47,7 @@ namespace TextParser
 			Console.WriteLine("Ratio: " + ratio);
 			Console.WriteLine("Elapsed time: " + (DateTime.Now - now).TotalSeconds);
 			Console.WriteLine("Would you like to parse another file?");
-			Console.WriteLine("Y/N (Default is Y)");
+			Console.WriteLine("Y/N (default is 'Y')");
 			string answer = Console.ReadLine();
 			if (answer == "n")
 			{
@@ -60,6 +59,24 @@ namespace TextParser
 				goto Mark;
 			}
 		}
+
+		private static string GetFullName(string fileName)
+		{
+			string path = Directory.GetCurrentDirectory();
+			string[] files = Directory.GetFiles(path);
+			Regex pattern = new Regex(fileName + @"\.");
+			foreach (string file in files)
+			{
+				Match match = pattern.Match(file);
+				if (match.Success)
+				{
+					fileName = file;
+				}
+			}
+
+			return fileName;
+		}
+
 		/// <summary>
 		/// Cleans the initial array from strings that have nothing to do with calculations.
 		/// </summary>
@@ -98,7 +115,7 @@ namespace TextParser
 			return list;
 		}
 		/// <summary>
-		/// The result of division of line length by extrusion length.
+		/// The result of division of line's length by extrusion length.
 		/// </summary>
 		/// <param name="refList">Refined list of input elements.</param>
 		private static double GetRatio(List<string> refList, bool absolute = false)

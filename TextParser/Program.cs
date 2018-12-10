@@ -11,6 +11,22 @@ namespace TextParser
 		{
 			int argCount = args.Length;
 			string fileContents = "";
+
+			bool abs = false;
+			if (argCount > 0)
+			{
+				if (Array.IndexOf(args, "-abs") != -1)
+				{
+					abs = true;
+				}
+				if (Array.IndexOf(args, "-help") != -1)
+				{
+					Console.WriteLine("-abs -- the program will run in absolute values mode.");
+					Console.WriteLine();
+					Console.WriteLine("Without parameters the program will compare the score to the baseline which is Ender3 test dog (0.4 mm extruder and 1.75 mm filament).");
+					Environment.Exit(0);
+				}
+			}
 			string fileName = "test";
 		Mark:
 			Console.Write("Enter a file name: ");
@@ -27,23 +43,17 @@ namespace TextParser
 			catch (FileNotFoundException)
 			{
 				Console.WriteLine("Wrong file name. Try again.");
+				goto Mark;
 			}
-			
+
 			double ratio = 0;
 
 			string[] lines = fileContents.Split('\n');
 			List<string> refinedList = RefineList(lines);
-			if (argCount > 0)
-			{
-				if (Array.IndexOf(args, "-abs") != -1)
-				{
-					ratio = GetRatio(refinedList, true);
-				}
-			}
-			else
-			{
-				ratio = GetRatio(refinedList);
-			}
+
+
+			ratio = GetRatio(refinedList, abs);
+
 			Console.WriteLine("Ratio: " + ratio);
 			Console.WriteLine("Elapsed time: " + (DateTime.Now - now).TotalSeconds);
 			Console.WriteLine("Would you like to parse another file?");

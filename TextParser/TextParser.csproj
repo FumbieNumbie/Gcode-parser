@@ -7,7 +7,7 @@
     <ProjectGuid>{DCEF587D-DC26-40E5-A982-EDA524E383B3}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>TextParser</RootNamespace>
-    <AssemblyName>Gcode Parser</AssemblyName>
+    <AssemblyName>GCP</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

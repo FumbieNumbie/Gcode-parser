@@ -11,10 +11,14 @@ namespace TextParser
 		{
 			int argCount = args.Length;
 			string fileContents = "";
-
+			bool lengths = false;
 			bool abs = false;
 			if (argCount > 0)
 			{
+				if (Array.IndexOf(args, "-l") != -1)
+				{
+					lengths = true;
+				}
 				if (Array.IndexOf(args, "-abs") != -1)
 				{
 					abs = true;
@@ -55,10 +59,10 @@ namespace TextParser
 			//	Console.WriteLine(item);
 			//}
 
-			ratio = GetRatio(refinedList, abs);
+			ratio = GetRatio(refinedList, abs, lengths);
 
-			Console.WriteLine("Ratio: " + Math.Round(ratio,2));
-			Console.WriteLine("Elapsed time: " + Math.Round((DateTime.Now - now).TotalSeconds,1)+ " sec");
+			Console.WriteLine("Ratio: " + Math.Round(ratio, 2));
+			Console.WriteLine("Elapsed time: " + Math.Round((DateTime.Now - now).TotalSeconds, 1) + " sec");
 			Console.WriteLine("Would you like to parse another file?");
 			Console.WriteLine("Y/N (default is 'Y')");
 			string answer = Console.ReadLine();
@@ -74,9 +78,25 @@ namespace TextParser
 
 		private static string GetFullName(string fileName)
 		{
+			string shortName = fileName;
 			string path = Directory.GetCurrentDirectory();
+			int lastB = fileName.LastIndexOf(@"\");
+			int lastF = fileName.LastIndexOf(@"/");
+
+
+			if (lastF != -1)
+			{
+				path = fileName.Substring(0, lastF);
+				shortName = fileName.Substring(lastF + 1);
+			}
+			if (lastB != -1)
+			{
+				path = fileName.Substring(0, lastB);
+				shortName = fileName.Substring(lastB + 1);
+			}
+			string patternSt = shortName + "\\."+ @"(?!stl)";
 			string[] files = Directory.GetFiles(path);
-			Regex pattern = new Regex(fileName + @"\.");
+			Regex pattern = new Regex(patternSt, RegexOptions.IgnoreCase);
 			foreach (string file in files)
 			{
 				Match match = pattern.Match(file);
@@ -86,6 +106,7 @@ namespace TextParser
 				}
 			}
 
+			Console.WriteLine("Parsing file " + fileName + ", please, wait.");
 			return fileName;
 		}
 
@@ -131,7 +152,7 @@ namespace TextParser
 		/// The result of division of line's length by extrusion length.
 		/// </summary>
 		/// <param name="refList">Refined list of input elements.</param>
-		private static double GetRatio(List<string> refList, bool absolute = false)
+		private static double GetRatio(List<string> refList, bool absolute = false, bool lengths = false)
 		{
 			double totalLength = 0;
 			float currentE = 0;
@@ -151,13 +172,17 @@ namespace TextParser
 					}
 					lastE = currentE;
 				}
-				if (i == refList.Count-1)
+				if (i == refList.Count - 1)
 				{
 					Regex anyE = new Regex(@"(E\d+\.*\d*)");
-					Match anyMatch = anyE.Match(refList[i]);
-					if (anyMatch.Success)
+					for (int k = i; k > 0; k--)
 					{
-						totalE += float.Parse(anyMatch.Value.Substring(1));
+						Match anyMatch = anyE.Match(refList[k]);
+						if (anyMatch.Success)
+						{
+							totalE += float.Parse(anyMatch.Value.Substring(1));
+							break;
+						}
 					}
 				}
 
@@ -170,6 +195,11 @@ namespace TextParser
 					totalLength += segment.Length();
 				}
 
+			}
+			if (lengths)
+			{
+				Console.WriteLine("Total line length: " + totalLength);
+				Console.WriteLine("Total extrusion length: " + totalE);
 			}
 			if (absolute == true)
 			{

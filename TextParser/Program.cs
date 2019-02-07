@@ -27,7 +27,6 @@ namespace TextParser
                 {
                     Console.WriteLine("  -abs -- the program will run in absolute values mode.");
                     Console.WriteLine("  -l   -- the program will display total line length and total extrusion length.");
-
                     Console.WriteLine();
                     Console.WriteLine("  Without parameters the program will compare the score to several baselines with following parameters:");
                     Console.WriteLine("Filament diameter is set to 1.75 mm, line width is 0.4 mm and line heights are 0.1, 0.15, 0.2, 0.3 mm.");
@@ -71,10 +70,10 @@ namespace TextParser
             else
             {
                 Console.WriteLine("Comparison of line density.");
-                Console.WriteLine("0.10mm layer height: " + Math.Round(ratio / 27.01, 2));
-                Console.WriteLine("0.15mm layer height: " + Math.Round(ratio / 40.52, 2));
-                Console.WriteLine("0.20mm layer height: " + Math.Round(ratio / 54.02, 2));
-                Console.WriteLine("0.30mm layer height: " + Math.Round(ratio / 81.02, 2));
+                Console.WriteLine("0.10mm layer height: " + Math.Round(ratio / 16.446, 2));
+                Console.WriteLine("0.15mm layer height: " + Math.Round(ratio / 24.67, 2));
+                Console.WriteLine("0.20mm layer height: " + Math.Round(ratio / 37.005, 2));
+                Console.WriteLine("0.30mm layer height: " + Math.Round(ratio / 49.34, 2));
 
             }
             Console.WriteLine("Elapsed time: " + Math.Round((DateTime.Now - now).TotalSeconds, 1) + " sec");
@@ -90,7 +89,27 @@ namespace TextParser
                 goto Mark;
             }
         }
+        private static string GetFullName(string fileName)
+        {
+            int forwardSIndex = fileName.LastIndexOf(@"/");
+            int backwardSIndex = fileName.LastIndexOf(@"\");
+            if (forwardSIndex != -1)
+            {
+                fileName = fileName.Substring(0, forwardSIndex) + @"\" + fileName.Substring(forwardSIndex + 1) + @".gcode";
+            }
+            else if (backwardSIndex != -1)
+            {
+                fileName = fileName.Substring(0, backwardSIndex) + @"\" + fileName.Substring(backwardSIndex + 1) + @".gcode";
+            }
+            else
+            {
+                fileName = Directory.GetCurrentDirectory() + @"\" + fileName + @".gcode";
+            }
 
+
+            return fileName;
+        }
+        /*
         private static string GetFullName(string fileName)
         {
             string shortName = fileName;
@@ -109,7 +128,8 @@ namespace TextParser
                 path = fileName.Substring(0, lastB);
                 shortName = fileName.Substring(lastB + 1);
             }
-            string patternSt = shortName + "\\." + @"(?!stl)";
+            string patternSt = "^" + path + shortName + @".gcode$";
+            Console.WriteLine(patternSt);
             string[] files = new string[0];
             try
             {
@@ -143,6 +163,7 @@ namespace TextParser
             Console.WriteLine("Parsing file " + fileName + ", please, wait.");
             return fileName;
         }
+        */
         /// <summary>
         /// Cleans the initial array from strings that have nothing to do with calculations.
         /// </summary>
@@ -241,7 +262,7 @@ namespace TextParser
                 Console.WriteLine("Total extrusion length: " + totalE);
             }
 
-            return totalLength / totalE;
+            return totalE / totalLength * 1000;
 
         }
         /// <summary>
